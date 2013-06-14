@@ -9,12 +9,14 @@ The other projects use command objects that encapsulate the command arguments an
 command that is beeing performed on the data object. A strong concept in ruby is the use of blocks
 to encapsulate code, and when using bucket you simply use blocks:
 
-  1> db = Bucket.new("my-first-db")
-  2> db.open
-  3> db.transaction(4710) { |n| @favorite_parfume = n }
-  4> n = db.transaction { @favorite_parfume += 1 }
-  5> puts "My favorite parfume is #{n}"
-  6> db.close
+```ruby
+db = Bucket.new("my-first-db")
+db.open
+db.transaction(4710) { |n| @favorite_parfume = n }
+n = db.transaction { @favorite_parfume += 1 }
+puts "My favorite parfume is #{n}"
+db.close
+```
 
 At row 1 a new database is created using an "empty" object as data container, you can also pass a
 class as the second object and when needed an instance will be created and used as the initial

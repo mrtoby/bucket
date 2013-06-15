@@ -10,7 +10,7 @@ class Bucket
   attr_reader :name, :at_version_id, :clock
 
   def self.destroy(db_name)
-    Storage.destroy(db_name)
+    MemoryStorage.destroy(db_name)
   end
 
   def initialize(name, data_object_class = nil)
@@ -33,7 +33,7 @@ class Bucket
       if is_open?
         raise IllegalStateError.new("Already open")
       end
-      @storage = Storage.new(@name)
+      @storage = MemoryStorage.new(@name)
       @storage.open
       restore_from_storage
     end

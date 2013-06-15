@@ -4,7 +4,7 @@ require './errors'
 
 # Class that support the bucket database with persistence, multiple
 # different implementations of the storage is possible.
-class Storage
+class MemoryStorage
 
   Transaction = Struct.new(:transaction_time,
                            :version_id_after_transaction,
@@ -12,10 +12,15 @@ class Storage
                            :params)
   
   @@log_registry = Hash.new
+  @@log_lock = Hash.new
+  @@mutex = Mutex.new
 
   # Class method used to destroy an existing database. 
   def self.destroy(db_name)
-    @@log_registry.delete(db_name)
+    @@mutex.synchronize do
+	  @@log_registry.delete(db_name)
+	  @@log_registry.delete(db_name)
+	end
   end
 
   def initialize(name)
@@ -28,7 +33,7 @@ class Storage
     if is_open?
       raise IllegalStateError.new("Already open")
     end
-    @transaction_log = Storage.fetch_log(@name)
+    @transaction_log = self.class.fetch_log(@name)
   end
 
   def is_open?
@@ -78,18 +83,34 @@ class Storage
 
   def close
     must_be_open
-    @transaction_log = nil
+    self.class.release_log(@name)
+	@transaction_log = nil
   end
 
   private
 
   def self.fetch_log(db_name)
-    log = @@log_registry[db_name]
-    if log.nil?
-      log = Array.new
-      @@log_registry[db_name] = log
-    end
-    log
+	@@mutex.synchronize do
+      if @@log_lock[db_name] == 1
+        raise IllegalStateError.new("Storage already in use")
+	  end
+      log = @@log_registry[db_name]
+      if log.nil?
+        log = Array.new
+        @@log_registry[db_name] = log
+      end
+	  @@log_lock[db_name] = 1
+      return log
+	end
+  end
+
+  def self.release_log(db_name)
+	@@mutex.synchronize do
+      if @@log_lock[db_name] != 1
+        raise IllegalStateError.new("Storage not in use")
+	  end
+	  @@log_lock.delete(db_name)
+	end    
   end
 
   def must_be_open

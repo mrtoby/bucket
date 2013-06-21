@@ -47,7 +47,7 @@ class Bucket
 
   def open
     @mutex.synchronize do
-      if is_open?
+      if open?
         raise IllegalStateError.new("Already open")
       end
       @storage = MemoryStorage.new(@name)
@@ -118,7 +118,7 @@ class Bucket
   end
  
   def eval_transaction(proc, proc_str, params)
-    if fast_mode? and not(proc.nil?)
+    if fast_mode? and not proc.nil?
       @data_object_binding.instance_exec(*params) &proc
     else
       proc = eval(proc_str, @data_object_binding)

@@ -11,38 +11,38 @@ class TestClock < Test::Unit::TestCase
   
   def test_initially_not_fixed
     clock = create_clock
-    assert_equal(false, clock.is_time_fixed?)
+    assert_equal(false, clock.time_fixed?)
   end
 
   def test_time_can_be_fixed
     clock = create_clock
     clock.with_fixed_time do
-      assert_equal(true, clock.is_time_fixed?)
+      assert_equal(true, clock.time_fixed?)
     end
-    assert_equal(false, clock.is_time_fixed?)
+    assert_equal(false, clock.time_fixed?)
   end
 
   def test_unfixed_time_after_nested_fixed_time
     clock = create_clock
     clock.with_fixed_time do
-      assert_equal(true, clock.is_time_fixed?)
+      assert_equal(true, clock.time_fixed?)
       clock.with_fixed_time do
-        assert_equal(true, clock.is_time_fixed?)
+        assert_equal(true, clock.time_fixed?)
       end
-      assert_equal(true, clock.is_time_fixed?)
+      assert_equal(true, clock.time_fixed?)
     end
-    assert_equal(false, clock.is_time_fixed?)
+    assert_equal(false, clock.time_fixed?)
   end
 
   def test_initially_running
     clock = create_clock
-    assert_equal(false, clock.is_paused?)
+    assert_equal(false, clock.paused?)
   end
 
   def test_can_pause
     clock = create_clock
     clock.pause
-    assert_equal(true, clock.is_paused?)
+    assert_equal(true, clock.paused?)
   end
 
   def test_can_not_pause_when_paused
@@ -55,14 +55,14 @@ class TestClock < Test::Unit::TestCase
     clock = create_clock
     clock.pause
     clock.resume
-    assert_equal(false, clock.is_paused?)
+    assert_equal(false, clock.paused?)
   end
 
   def test_can_resume_with_system_time
     clock = create_clock
     clock.pause
     clock.resume_with_system_time
-    assert_equal(false, clock.is_paused?)
+    assert_equal(false, clock.paused?)
   end
 
   def test_can_not_resume_when_running

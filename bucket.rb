@@ -25,7 +25,24 @@ class Bucket
     @data_object = nil
     @data_object_binding = nil
     @clock = nil
+    fast_mode
     @mutex = Mutex.new
+  end
+
+  def fast_mode
+    @mode = :fast
+  end
+
+  def safe_mode
+    @mode = :safe
+  end
+
+  def fast_mode?
+    @mode == :fast
+  end
+
+  def safe_mode?
+    @mode == :safe
   end
 
   def open
@@ -39,11 +56,11 @@ class Bucket
     end
   end
 
-  def is_open?
+  def open?
     not(@storage.nil?)
   end
   
-  def is_new?
+  def new?
     @at_version_id == 0
   end
 
@@ -55,7 +72,7 @@ class Bucket
     @mutex.synchronize do
       begin
         @clock.with_fixed_time do
-          result = eval_transaction(proc_str, params)
+          result = eval_transaction(block, proc_str, params)
           @storage.log_transaction(@clock.now, 
                                    @at_version_id + 1, 
                                    proc_str, 
@@ -100,9 +117,13 @@ class Bucket
     end
   end
  
-  def eval_transaction(proc_str, params)
-    proc = eval(proc_str, @data_object_binding)
-    proc.call(*params)
+  def eval_transaction(proc, proc_str, params)
+    if fast_mode? and not(proc.nil?)
+      @data_object_binding.instance_exec(*params) &proc
+    else
+      proc = eval(proc_str, @data_object_binding)
+      proc.call(*params)
+    end
   end
 
   def restore_from_storage
@@ -138,7 +159,7 @@ class Bucket
     @clock.pause
     @storage.each_transaction(@at_version_id + 1) do |t, v, proc_str, params|
       @clock.travel_to(t)
-      eval_transaction(proc_str, params)
+      eval_transaction(nil, proc_str, params)
       @at_version_id = v
     end
   end

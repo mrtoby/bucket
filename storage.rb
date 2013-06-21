@@ -30,13 +30,13 @@ class MemoryStorage
 
   # To be able to use the storage, it should first be opened
   def open
-    if is_open?
+    if open?
       raise IllegalStateError.new("Already open")
     end
     @transaction_log = self.class.fetch_log(@name)
   end
 
-  def is_open?
+  def open?
     not(@transaction_log.nil?)
   end
 
@@ -114,7 +114,7 @@ class MemoryStorage
   end
 
   def must_be_open
-    if not(is_open?)
+    if not(open?)
       raise IllegalStateError.new("Not open")
     end
   end

@@ -90,7 +90,7 @@ class MemoryStorage
   private
 
   def self.fetch_log(db_name)
-	@@mutex.synchronize do
+    @@mutex.synchronize do
       if @@log_lock[db_name] == 1
         raise IllegalStateError.new("Storage already in use")
 	  end
@@ -99,18 +99,18 @@ class MemoryStorage
         log = Array.new
         @@log_registry[db_name] = log
       end
-	  @@log_lock[db_name] = 1
+      @@log_lock[db_name] = 1
       return log
-	end
+    end
   end
 
   def self.release_log(db_name)
-	@@mutex.synchronize do
+    @@mutex.synchronize do
       if @@log_lock[db_name] != 1
         raise IllegalStateError.new("Storage not in use")
-	  end
-	  @@log_lock.delete(db_name)
-	end    
+      end
+      @@log_lock.delete(db_name)
+    end    
   end
 
   def must_be_open

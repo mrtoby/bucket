@@ -60,7 +60,7 @@ class Bucket
     not(@storage.nil?)
   end
   
-  def new?
+  def just_created?
     @at_version_id == 0
   end
 

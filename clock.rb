@@ -31,30 +31,30 @@ class Clock
   end
 
   def with_fixed_time(&block)
-    if is_time_fixed?
+    if time_fixed?
       block.call
     else
       @fixed_time = self.now
       begin
         block.call
       ensure
-        if not(is_paused?)
+        if not(paused?)
           @fixed_time = nil
         end
       end
     end
   end
 
-  def is_paused?
+  def paused?
     return not(@paused_at.nil?)
   end
 
-  def is_time_fixed?
+  def time_fixed?
     return not(@fixed_time.nil?)
   end
 
   def pause
-    if is_paused?
+    if paused?
       raise ClockPausedError.new
     end
     @paused_at = self.now

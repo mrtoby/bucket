@@ -15,7 +15,7 @@ class TestPersistence < Test::Unit::TestCase
 
     # Open/restore database and verify that the variable is there
     db.open
-    assert_equal(false, db.is_new?)
+    assert_equal(false, db.just_created?)
     assert_equal(:a_value, db.transaction { @a_variable })
     db.close
   end  

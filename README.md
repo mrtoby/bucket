@@ -36,3 +36,5 @@ read data from the database.
 The last row just closes the database.
 
 One semantic difference between a transaction block and a normal ruby block is that only variables declared as block parameters will be accessible. And the block is evaluated inside the data object, so self will be set to that object. In the example above, when no data object is specified, an "empty" object will be used as data object. For example: the variable db is not accessible in the transaction.
+
+The intention of "bucket" is to make it easy to implement persistence. High performance is not the goal.

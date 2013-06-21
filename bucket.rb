@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 require 'sourcify'
-require './storage'
+require './memory_storage'
 require './clock'
 require './errors'
 

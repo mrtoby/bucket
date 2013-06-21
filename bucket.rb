@@ -61,7 +61,6 @@ class Bucket
                                    proc_str, 
                                    params)
           @at_version_id += 1
-          @mutex.unlock
           return result
         end
       rescue => e

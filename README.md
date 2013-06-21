@@ -18,6 +18,8 @@ puts "My favorite parfume is #{n}"
 db.close
 ```
 
+One semantic difference between a transaction block and a normal ruby block is that only variables declared as block parameters will be accessible. And the block is evaluated inside the data object, so self will be set to that object. In the example above, when no data object is specified, an "empty" object will be used as data object.
+
 At row 1 a new database is created using an "empty" object as data container, you can also pass a
 class as the second object and when needed an instance will be created and used as the initial
 object for the database. The second row will simply open the database.

@@ -19,7 +19,7 @@ class TestDataObject < Test::Unit::TestCase
 
   def test_database_with_data_object_is_new
     db = open_new_db(SomeDataObject)
-    assert_equal(true, db.is_new?)
+    assert_equal(true, db.just_created?)
   end
  
   def test_initialized

@@ -11,21 +11,14 @@ class MemoryStorage
                            :proc_str,
                            :params)
   
-  @@log_registry = Hash.new
-  @@log_lock = Hash.new
-  @@mutex = Mutex.new
 
   # Class method used to destroy an existing database. 
   def self.destroy(db_name)
-    @@mutex.synchronize do
-	  @@log_registry.delete(db_name)
-	  @@log_registry.delete(db_name)
-	end
+    # TODO
   end
 
   def initialize(name)
-    @name = name
-    @transaction_log = nil
+    # TODO
   end
 
   # To be able to use the storage, it should first be opened
@@ -33,16 +26,16 @@ class MemoryStorage
     if open?
       raise IllegalStateError.new("Already open")
     end
-    @transaction_log = self.class.fetch_log(@name)
+    # TODO
   end
 
   def open?
-    not(@transaction_log.nil?)
+    # TODO
   end
 
   def has_snapshot?
     must_be_open
-    false
+    # TODO
   end
 
   def latest_snapshot_version
@@ -61,57 +54,27 @@ class MemoryStorage
                       params)
     must_be_open
     trans = Transaction.new(transaction_time, version_id_after_transaction, proc_str, params)
-    @transaction_log << trans
+    # TODO
   end
 
   def take_snapshot(data_object, at_version_id)
     must_be_open
-    raise "Not implemented"
+    # TODO
   end
 
   def each_transaction(from_version_id, &block)
     must_be_open
-    @transaction_log.each do |trans|
-      if trans.version_id_after_transaction >= from_version_id
-        yield(trans.transaction_time, 
-              trans.version_id_after_transaction, 
-              trans.proc_str, 
-              trans.params)
-      end
-    end
+    # TODO
   end
 
   def close
     must_be_open
-    self.class.release_log(@name)
-	@transaction_log = nil
+    # TODO
   end
 
-  private
+  Privat
 
-  def self.fetch_log(db_name)
-    @@mutex.synchronize do
-      if @@log_lock[db_name] == 1
-        raise IllegalStateError.new("Storage already in use")
-	  end
-      log = @@log_registry[db_name]
-      if log.nil?
-        log = Array.new
-        @@log_registry[db_name] = log
-      end
-      @@log_lock[db_name] = 1
-      return log
-    end
-  end
-
-  def self.release_log(db_name)
-    @@mutex.synchronize do
-      if @@log_lock[db_name] != 1
-        raise IllegalStateError.new("Storage not in use")
-      end
-      @@log_lock.delete(db_name)
-    end    
-  end
+  
 
   def must_be_open
     if not(open?)

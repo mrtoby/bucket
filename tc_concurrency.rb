@@ -10,32 +10,32 @@ class TestConcurrency < Test::Unit::TestCase
   def test_concurrent_transactions_not_possible
     skip("Don't know any good way to test this");
     mutex = Mutex.new
-    db = open_new_empty_db
+    with_new_empty_db do |db|
+      # Create a fiber that starts a transaction and then halts, 
+      # and run it until the halting point
+      a_fiber = Fiber.new do
+        db.transaction { Fiber.yield }
+      end
+      a_fiber.resume
 
-    # Create a fiber that starts a transaction and then halts, 
-    # and run it until the halting point
-    a_fiber = Fiber.new do
-      db.transaction { Fiber.yield }
+      # Create a thread that tries to start a transaction
+      a_thread = Thread.new do
+        db.transaction { :just_something }
+        mutex.lock
+      end
+      sleep(1)
+
+      # The thread should be blocked by the transaction and the mutex
+      # should thus not be locked
+      assert_equal(false, mutex.locked?)
+
+      a_fiber.resume
+      sleep(1)
+      assert_equal(true, mutex.locked?)
+
+      # Cleanup
+      Thread.kill(a_thread)
     end
-    a_fiber.resume
-
-    # Create a thread that tries to start a transaction
-    a_thread = Thread.new do
-      db.transaction { :just_something }
-      mutex.lock
-    end
-    sleep(1)
-
-    # The thread should be blocked by the transaction and the mutex
-    # should thus not be locked
-    assert_equal(false, mutex.locked?)
-
-    a_fiber.resume
-    sleep(1)
-    assert_equal(true, mutex.locked?)
-
-    # Cleanup
-    Thread.kill(a_thread)
-    db.close
-  end  
+  end
+  
 end

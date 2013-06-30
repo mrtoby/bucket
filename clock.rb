@@ -91,7 +91,7 @@ class Clock
   private
 
   def must_be_paused
-    if not(is_paused?)
+    if not(paused?)
       raise ClockNotPausedError.new
     end
   end

@@ -1,21 +1,22 @@
 #!/usr/bin/env ruby
 
 require 'sourcify'
-require './memory_storage'
 require './clock'
 require './errors'
+require './memory_storage'
 
 class Bucket
 
   attr_reader :name, :at_version_id, :clock
 
-  def self.destroy(db_name)
-    MemoryStorage.destroy(db_name)
-  end
-
-  def initialize(name, data_object_class = nil)
+  def initialize(name, data_object_class = nil, storage_class = nil)
     @name = name
     @at_version_id = nil
+    if storage_class.nil?
+        @storage_class = MemoryStorage
+    else
+      @storage_class = storage_class
+    end
     @storage = nil
     if data_object_class.nil?
       @data_object_class = Class.new
@@ -25,43 +26,30 @@ class Bucket
     @data_object = nil
     @data_object_binding = nil
     @clock = nil
-    fast_mode
     @mutex = Mutex.new
   end
-
-  def fast_mode
-    @mode = :fast
-  end
-
-  def safe_mode
-    @mode = :safe
-  end
-
-  def fast_mode?
-    @mode == :fast
-  end
-
-  def safe_mode?
-    @mode == :safe
-  end
-
+  
   def open
     @mutex.synchronize do
-      if open?
+      if unsynchronized_open?
         raise IllegalStateError.new("Already open")
       end
-      @storage = MemoryStorage.new(@name)
+      @storage = @storage_class.new(@name)
       @storage.open
       restore_from_storage
     end
   end
 
   def open?
-    not(@storage.nil?)
+    @mutex.synchronize do
+      unsynchronized_open?
+    end
   end
-  
+
   def just_created?
-    @at_version_id == 0
+    @mutex.synchronize do
+      @at_version_id == 0
+    end
   end
 
   def transaction(*params, &block)
@@ -70,9 +58,10 @@ class Bucket
     end
     proc_str = proc_as_string(block)
     @mutex.synchronize do
+      must_be_open
       begin
         @clock.with_fixed_time do
-          result = eval_transaction(block, proc_str, params)
+          result = eval_transaction(proc_str, params, &block)
           @storage.log_transaction(@clock.now, 
                                    @at_version_id + 1, 
                                    proc_str, 
@@ -89,6 +78,7 @@ class Bucket
 
   def take_snapshot
     @mutex.synchronize do
+      must_be_open
       @storage.take_snapshot(@data_object, @at_version_id)
     end
   end
@@ -99,6 +89,7 @@ class Bucket
 
   def close
     @mutex.synchronize do
+      must_be_open
       @storage.close
       @storage = nil
       use_clock(nil)
@@ -117,13 +108,13 @@ class Bucket
     end
   end
  
-  def eval_transaction(proc, proc_str, params)
-    if fast_mode? and not proc.nil?
-      @data_object_binding.instance_exec(*params) &proc
-    else
+  def eval_transaction(proc_str, params, &block)
+#    if fast_mode? and block_given?
+#      @data_object.instance_exec(*params, &block)	
+#    else
       proc = eval(proc_str, @data_object_binding)
       proc.call(*params)
-    end
+#     end
   end
 
   def restore_from_storage
@@ -159,13 +150,22 @@ class Bucket
     @clock.pause
     @storage.each_transaction(@at_version_id + 1) do |t, v, proc_str, params|
       @clock.travel_to(t)
-      eval_transaction(nil, proc_str, params)
+      eval_transaction(proc_str, params)
       @at_version_id = v
     end
   end
 
   def proc_as_string(proc)
-    proc.to_source
+    return proc.to_source
+  end
+  
+  def must_be_open
+    if not(unsynchronized_open?)
+      raise IllegalStateError.new("Not open")
+    end
   end
 
+  def unsynchronized_open?  
+    return not(@storage.nil?)
+  end
 end

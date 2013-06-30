@@ -10,7 +10,7 @@ class MemoryStorage
                            :version_id_after_transaction,
                            :proc_str,
                            :params)
-  
+	
   @@log_registry = Hash.new
   @@log_lock = Hash.new
   @@mutex = Mutex.new
@@ -18,9 +18,9 @@ class MemoryStorage
   # Class method used to destroy an existing database. 
   def self.destroy(db_name)
     @@mutex.synchronize do
-	  @@log_registry.delete(db_name)
-	  @@log_registry.delete(db_name)
-	end
+      @@log_registry.delete(db_name)
+      @@log_registry.delete(db_name)
+    end
   end
 
   def initialize(name)
@@ -37,12 +37,12 @@ class MemoryStorage
   end
 
   def open?
-    not(@transaction_log.nil?)
+    return not(@transaction_log.nil?)
   end
 
   def has_snapshot?
     must_be_open
-    false
+    return false
   end
 
   def latest_snapshot_version
@@ -84,7 +84,7 @@ class MemoryStorage
   def close
     must_be_open
     self.class.release_log(@name)
-	@transaction_log = nil
+    @transaction_log = nil
   end
 
   private
@@ -93,7 +93,7 @@ class MemoryStorage
     @@mutex.synchronize do
       if @@log_lock[db_name] == 1
         raise IllegalStateError.new("Storage already in use")
-	  end
+      end
       log = @@log_registry[db_name]
       if log.nil?
         log = Array.new

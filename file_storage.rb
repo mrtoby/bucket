@@ -72,9 +72,7 @@ class MemoryStorage
     # TODO
   end
 
-  Privat
-
-  
+  private
 
   def must_be_open
     if not(open?)

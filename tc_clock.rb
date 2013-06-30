@@ -78,7 +78,7 @@ class TestClock < Test::Unit::TestCase
     clock.travel(60)
     assert_equal(paused_time + 60, clock.now)
   end
-
+	
   def test_can_travel_to_the_past
     clock = create_clock
     clock.pause

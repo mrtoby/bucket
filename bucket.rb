@@ -3,37 +3,45 @@
 require 'sourcify'
 require './clock'
 require './errors'
-require './memory_storage'
+require './storage'
 
 class Bucket
 
   attr_reader :name, :at_version_id, :clock
 
-  def initialize(name, data_object_class = nil, storage_class = nil)
+  def initialize(name, mutex = nil)
     @name = name
     @at_version_id = nil
-    if storage_class.nil?
-        @storage_class = MemoryStorage
-    else
-      @storage_class = storage_class
-    end
+    @storage_class = MemoryStorage
     @storage = nil
-    if data_object_class.nil?
-      @data_object_class = Class.new
-    else
-      @data_object_class = data_object_class
-    end
+    @data_object_class = Class.new
     @data_object = nil
     @data_object_binding = nil
     @clock = nil
-    @mutex = Mutex.new
+    if mutex.nil?
+      @mutex = Mutex.new
+    else
+      @mutex = mutex
+    end
+  end
+
+  def data_object_class=(data_object_class)
+    @mutex.synchronize do
+      must_be_closed
+      @data_object_class = data_object_class
+    end
+  end
+  
+  def storage_class=(storage_class)
+    @mutex.synchronize do
+      must_be_closed
+      @storage_class = storage_class
+    end
   end
   
   def open
     @mutex.synchronize do
-      if unsynchronized_open?
-        raise IllegalStateError.new("Already open")
-      end
+      must_be_closed
       @storage = @storage_class.new(@name)
       @storage.open
       restore_from_storage
@@ -162,6 +170,12 @@ class Bucket
   def must_be_open
     if not(unsynchronized_open?)
       raise IllegalStateError.new("Not open")
+    end
+  end
+
+  def must_be_closed
+    if unsynchronized_open?
+      raise IllegalStateError.new("Not closed")
     end
   end
 

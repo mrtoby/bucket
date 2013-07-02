@@ -8,8 +8,8 @@ class TestTime < Test::Unit::TestCase
   include TestBucketBase
 
   def test_time_is_preserved
-    # Save the (controlled) time in a variable
     with_new_empty_db do |db|
+      # Save the (controlled) time in a variable
       db.clock.pause
       db.clock.travel(-4711) # Just some time in the past
       time_in_transaction = db.transaction { @a_variable = clock.now }
@@ -22,5 +22,5 @@ class TestTime < Test::Unit::TestCase
       assert_equal(time_in_transaction, db.transaction { @a_variable })
     end
   end
-  
+    
 end

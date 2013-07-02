@@ -4,6 +4,105 @@ require './errors'
 
 # Class that support the bucket database with persistence, multiple
 # different implementations of the storage is possible.
+class FileStorage
+
+  Transaction = Struct.new(:transaction_time,
+                           :version_id_after_transaction,
+                           :proc_str,
+                           :params)
+  
+  Snapshot = Struct.new(:snapshot_time,
+                        :latest_version_id_in_snapshot,
+                        :data_object)
+                        
+  # Class method used to destroy an existing database. 
+  def self.destroy(db_name)
+    if try_lock_folder(db_name)
+      File.delete(db_name)
+    else
+      raise IllegalStateError("Could not lock folder")
+    end
+  end
+
+  def initialize(name)
+    @folder = name
+  end
+
+  # To be able to use the storage, it should first be opened
+  def open
+    if open?
+      raise IllegalStateError.new("Already open")
+    end
+    if try_lock_folder(@folder)
+      # TODO: Figure out what the last transaction id is
+    else
+      raise IllegalStateError.new("Could not lock folder")
+    end
+  end
+
+  def open?
+    # TODO
+  end
+
+  def has_snapshot?
+    must_be_open
+    # TODO
+  end
+
+  def latest_snapshot_version
+    must_be_open
+    raise "Not implemented"
+  end
+ 
+  def restore_latest_snapshot
+    must_be_open
+    raise "Not implemented"
+  end
+
+  def log_transaction(transaction_time,
+                      version_id_after_transaction, 
+                      proc_str, 
+                      params)
+    must_be_open
+    trans = Transaction.new(transaction_time, version_id_after_transaction, proc_str, params)
+    # TODO
+  end
+
+  def take_snapshot(data_object, at_version_id)
+    must_be_open
+    # TODO
+  end
+
+  def each_transaction(from_version_id, &block)
+    must_be_open
+    # TODO
+  end
+
+  def close
+    must_be_open
+    unlock_folder(@folder)
+    # TODO
+  end
+
+  private
+
+  def must_be_open
+    if not(open?)
+      raise IllegalStateError.new("Not open")
+    end
+  end
+
+  def try_lock_folder
+  end
+  
+  def unlock_folder
+  end
+  
+end
+
+
+# Class that support the bucket database with persistence, multiple
+# different implementations of the storage is possible.
 class MemoryStorage
 
   Transaction = Struct.new(:transaction_time,

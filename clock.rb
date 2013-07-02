@@ -1,16 +1,6 @@
 #!/usr/bin/env ruby
 
-class ClockNotPausedError < StandardError
-  def initialize
-    super("Clock not paused")
-  end
-end
-
-class ClockPausedError < StandardError
-  def initialize
-    super("Clock paused")
-  end
-end
+require './errors'
 
 class Clock
 
@@ -55,7 +45,7 @@ class Clock
 
   def pause
     if paused?
-      raise ClockPausedError.new
+      raise IllegalStateError.new('Already paused')
     end
     @paused_at = self.now
     @fixed_time = @paused_at
@@ -92,7 +82,7 @@ class Clock
 
   def must_be_paused
     if not(paused?)
-      raise ClockNotPausedError.new
+      raise IllegalStateError.new('Not paused')
     end
   end
 end

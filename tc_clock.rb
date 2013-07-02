@@ -48,7 +48,7 @@ class TestClock < Test::Unit::TestCase
   def test_can_not_pause_when_paused
     clock = create_clock
     clock.pause
-    assert_raise(ClockPausedError) { clock.pause }
+    assert_raise(IllegalStateError) { clock.pause }
   end
 
   def test_can_resume
@@ -67,8 +67,8 @@ class TestClock < Test::Unit::TestCase
 
   def test_can_not_resume_when_running
     clock = create_clock
-    assert_raise(ClockNotPausedError) { clock.resume }
-    assert_raise(ClockNotPausedError) { clock.resume_with_system_time }
+    assert_raise(IllegalStateError) { clock.resume }
+    assert_raise(IllegalStateError) { clock.resume_with_system_time }
   end
 
   def test_can_travel_to_future
@@ -105,9 +105,9 @@ class TestClock < Test::Unit::TestCase
 
   def test_can_not_travel_when_running
     clock = create_clock
-    assert_raise(ClockNotPausedError) { clock.travel(100) }
-    assert_raise(ClockNotPausedError) { clock.travel(-100) }
-    assert_raise(ClockNotPausedError) { clock.travel_to(Time.now) }
+    assert_raise(IllegalStateError) { clock.travel(100) }
+    assert_raise(IllegalStateError) { clock.travel(-100) }
+    assert_raise(IllegalStateError) { clock.travel_to(Time.now) }
   end
 
 end

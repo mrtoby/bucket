@@ -3,38 +3,64 @@
 require 'test/unit'
 require './tc_bucket_base'
 
+
+class NonBlockingMutex
+
+  def initialize()
+    @mutex = Mutex.new
+  end
+
+  def lock
+    if not(@mutex.try_lock)
+      raise IllegalStateError.new('Mutex already locked')
+    end
+  end
+  
+  def synchronize(&block)
+    if @mutex.try_lock
+      begin
+        block.call
+      ensure
+        @mutex.unlock
+      end
+    else
+      raise IllegalStateError.new('Mutex already locked')
+    end
+  end
+  
+  def unlock 
+    return @mutex.unlock
+  end
+  
+end
+
+
 class TestConcurrency < Test::Unit::TestCase
 
   include TestBucketBase
 
   def test_concurrent_transactions_not_possible
-    skip("Don't know any good way to test this");
-    mutex = Mutex.new
-    with_new_empty_db do |db|
+    with_new_empty_db(NonBlockingMutex.new) do |db|
+    
       # Create a fiber that starts a transaction and then halts, 
       # and run it until the halting point
-      a_fiber = Fiber.new do
+      fiber1 = Fiber.new do
         db.transaction { Fiber.yield }
       end
-      a_fiber.resume
+      fiber1.resume
 
       # Create a thread that tries to start a transaction
-      a_thread = Thread.new do
+      fiber2 = Fiber.new do
         db.transaction { :just_something }
-        mutex.lock
       end
-      sleep(1)
 
-      # The thread should be blocked by the transaction and the mutex
-      # should thus not be locked
-      assert_equal(false, mutex.locked?)
-
-      a_fiber.resume
-      sleep(1)
-      assert_equal(true, mutex.locked?)
-
-      # Cleanup
-      Thread.kill(a_thread)
+      # Since fiber1 is halted with the mutex locked running fiber2 should
+      # raise an exception since we are using the non blocking mutex.
+      assert_raise(IllegalStateError) { fiber2.resume }
+      
+      # Resume fiber1 to unlock the mutex, so that it is possible
+      # to close the database.
+      assert_nothing_raised { fiber1.resume }
     end
   end
   
